@@ -56,7 +56,7 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
         }),
       });
   
-      const data = await res.json();
+      const data = await res.json();[]
   
       if (res.ok) {
         let remedyText = data.remedy || '';
@@ -133,35 +133,48 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
     </h2>
 
     {remedy
-      .split(/\n+/)
-      .map((line, index) => {
-        const cleaned = line.replace(/[*\-•]/g, '').trim();
-        const match = cleaned.match(/^([A-Z][^:]{0,50}):\s*(.*)/);
+  .split(/\n+/)
+  .map((line, index) => {
+    const cleaned = line.replace(/[*\-•]/g, '').trim();
+    const match = cleaned.match(/^([A-Z][^:]{0,50}):\s*(.*)/);
 
-        if (match) {
-          const [heading, content] = [match[1], match[2]];
-          const icon =
-            heading === 'Definition' ? '📘' :
-            heading === 'Remedy' ? '💊' :
-            heading === 'Explanation' ? '📝' : '📄';
+    if (match) {
+      const [heading, content] = [match[1], match[2]];
+      const icon =
+        heading === 'Definition' ? '📘' :
+        heading === 'Remedy' ? '💊' :
+        heading === 'Explanation' ? '📝' : '📄';
 
-          return (
-            <p key={index} className="text-green-900 mb-2">
-              <span className="font-semibold">{icon} {heading}:</span> {content}
-            </p>
-          );
-        }
+      // Main heading stays left-aligned, while subpoints are indented
+      if (heading === 'Definition' || heading === 'Explanation') {
+        return (
+          <p key={index} className="text-green-900 mb-2 text-left pl-6">
+            <span className="font-semibold">{icon} {heading}:</span> {content}
+          </p>
+        );
+      } else {
+        return (
+          <p key={index} className="text-green-900 mb-2 text-left">
+            <span className="font-semibold">{icon} {heading}:</span> {content}
+          </p>
+        );
+      }
+    }
 
-        if (cleaned) {
-          return (
-            <p key={index} className="text-lg font-bold text-green-700 mt-6 border-l-4 border-green-400 pl-3">
-              {cleaned}
-            </p>
-          );
-        }
+    // If it's a non-heading line, ensure it's left-aligned with no indentation
+    if (cleaned) {
+      return (
+        <p key={index} className="text-lg font-bold text-green-700 mt-6 border-l-4 border-green-400 pl-0 text-left">
+          {cleaned}
+        </p>
+      );
+    }
 
-        return null;
-      })}
+    return null;
+  })}
+
+
+
   </div>
 )}
 

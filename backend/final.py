@@ -5,7 +5,7 @@ from google.genai import Client
 
 app = Flask(__name__)
 
-# HuggingFace model client
+#Model Implementation
 client = InferenceClient(
     model="linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification",
     token="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"

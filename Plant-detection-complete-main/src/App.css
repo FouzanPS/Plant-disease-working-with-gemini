@@ -1,6 +1,6 @@
 /* Setting a plant-themed background for the whole website */
 body {
-  background-image: url('./assets/images/4092826.jpg');
+  background-image: url('/Plant-detection-complete-main/src/assets/images/4092826.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

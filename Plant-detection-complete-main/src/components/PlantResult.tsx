@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Stethoscope, PlusCircle } from 'lucide-react';
 import { PlantIdentification } from '@/types/plant';
 import ResultCard from './ResultCard';
+import { Card } from './ui/card';
 
 interface PlantResultProps {
   plant: PlantIdentification;
@@ -18,6 +19,7 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [diseaseResult, setDiseaseResult] = useState<DiseaseResult | null>(null);
   const [remedy, setRemedy] = useState<string | null>(null);
+  const [heatmapUrl, setHeatmapUrl] = useState<string | null>(null);
   const [remedyLoading, setRemedyLoading] = useState(false);
   const [isRemedyOpen, setIsRemedyOpen] = useState(false);
 
@@ -31,7 +33,8 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
       const data = await res.json();
 
       if (res.ok) {
-        setDiseaseResult(data); // data has { result, confidence }
+        setDiseaseResult(data);
+        setHeatmapUrl(data.heatmapUrl || null);
       } else {
         alert(data.error || 'Failed to analyze disease.');
       }
@@ -44,29 +47,22 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
   };
 
   const handleGetRemedy = async () => {
-    if (!diseaseResult) return;
-  
+    setRemedyLoading(true);
     try {
-      setRemedyLoading(true);
       const res = await fetch('http://localhost:3000/remedysearch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          context: `Explain the remedies for ${diseaseResult.result} in short with bullet points with clear understanding short definition, give atleat 6-7 points.` 
+          context: `Explain the remedies for ${diseaseResult?.result} in short with bullet points with clear understanding short definition, give at least 6-7 points.` 
         }),
       });
-  
-      const data = await res.json();[]
-  
+
+      const data = await res.json();
+
       if (res.ok) {
-        let remedyText = data.remedy || '';
-        const firstBulletIndex = remedyText.search(/[-•*]/);
-        if (firstBulletIndex !== -1) {
-          remedyText = remedyText.slice(firstBulletIndex).trim();
-        }
-        setRemedy(remedyText);
+        setRemedy(data.remedy);
       } else {
-        alert(data.error || 'Failed to fetch remedy.');
+        alert(data.error || 'Failed to get remedy.');
       }
     } catch (err) {
       console.error(err);
@@ -75,7 +71,6 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
       setRemedyLoading(false);
     }
   };
-  
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -90,7 +85,37 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
         </Button>
         <h2 className="text-2xl font-bold mb-4">Plant Identification Result</h2>
 
-        <ResultCard plant={plant} />
+        <div className="flex flex-col lg:flex-row justify-center items-center gap-6 mt-4">
+          {/* Original Image */}
+          <div className="w-full lg:w-1/2 flex flex-col items-center">
+            <h3 className="text-xl font-bold text-green-700 mb-2 text-center">Original</h3>
+            <Card className="overflow-hidden animate-fade-in w-full max-w-[300px]">
+              <div className="aspect-[4/3] bg-muted w-full">
+                <img
+                  src={plant.imageUrl}
+                  alt={plant.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </Card>
+          </div>
+
+          {/* Heatmap Image (if available) */}
+          {heatmapUrl && (
+            <div className="w-full lg:w-1/2 flex flex-col items-center mt-6 lg:mt-0">
+              <h3 className="text-xl font-bold text-green-700 mb-2 text-center">Heatmap</h3>
+              <Card className="overflow-hidden animate-fade-in w-full max-w-[300px]">
+                <div className="aspect-[4/3] bg-muted w-full">
+                  <img
+                    src={heatmapUrl}
+                    alt="Disease Heatmap"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
 
         <div className="mt-6 text-center">
           <Button 
@@ -103,17 +128,15 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
           </Button>
 
           {diseaseResult && (
-  <div className="mt-4 flex items-center justify-between">
-    <p className="text-xl font-semibold text-gray-800">
-      {diseaseResult.result}
-    </p>
-    <span className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded-full">
-      {diseaseResult.confidence}% match
-    </span>
-  </div>
-)}
-
-          {/* Get Remedy Button */}
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-xl font-semibold text-gray-800">
+                {diseaseResult.result}
+              </p>
+              <span className="bg-green-600 text-white text-sm font-medium px-3 py-1 rounded-full">
+                {diseaseResult.confidence}% match
+              </span>
+            </div>
+          )}
           {diseaseResult && (
             <Button 
               onClick={handleGetRemedy}
@@ -125,70 +148,64 @@ const PlantResult: React.FC<PlantResultProps> = ({ plant, onBack }) => {
             </Button>
           )}
 
-   {/* Remedy Dropdown */}
-   {remedy && isRemedyOpen && (
-  <div className="bg-green-50 p-6 rounded-2xl shadow-md mt-6 border border-green-200">
-    <h2 className="text-xl font-extrabold text-green-800 mb-4">
-      🌿 Suggested Remedy
-    </h2>
+          {/* Toggle Remedy Dropdown */}
+          {remedy && (
+            <Button 
+              onClick={() => setIsRemedyOpen((prev) => !prev)}
+              className="mt-4 text-sm text-green-900 bg-green-400 font-bold"
+            >
+              {isRemedyOpen ? 'Hide remedy' : 'Show remedy'}
+            </Button>
+          )}
 
-    {remedy
-  .split(/\n+/)
-  .map((line, index) => {
-    const cleaned = line.replace(/[*\-•]/g, '').trim();
-    const match = cleaned.match(/^([A-Z][^:]{0,50}):\s*(.*)/);
+          {/* Remedy Block */}
+          {remedy && isRemedyOpen && (
+            <div className="bg-green-50 p-6 rounded-2xl shadow-md mt-6 border border-green-200 text-left">
+              <h2 className="text-xl font-extrabold text-green-800 mb-4">
+                Suggested Remedies for {diseaseResult.result}
+              </h2>
+              {remedy &&
+                remedy
+                  .replace(/^Okay.*?:\s*/i, '') // Remove the default genai intro
+                  .split(/\n+/)
+                  .map((line, index) => {
+                    const cleaned = line.replace(/[*\-•]/g, '').trim();
+                    const match = cleaned.match(/^([A-Z][^:]{0,50}):\s*(.*)/);
 
-    if (match) {
-      const [heading, content] = [match[1], match[2]];
-      const icon =
-        heading === 'Definition' ? '📘' :
-        heading === 'Remedy' ? '💊' :
-        heading === 'Explanation' ? '📝' : '📄';
+                    if (match) {
+                      const [heading, content] = [match[1], match[2]];
+                      const icon =
+                        heading === 'Definition' ? '📘' :
+                        heading === 'Remedy' ? '💊' :
+                        heading === 'Explanation' ? '📝' : '📄';
 
-      // Main heading stays left-aligned, while subpoints are indented
-      if (heading === 'Definition' || heading === 'Explanation') {
-        return (
-          <p key={index} className="text-green-900 mb-2 text-left pl-6">
-            <span className="font-semibold">{icon} {heading}:</span> {content}
-          </p>
-        );
-      } else {
-        return (
-          <p key={index} className="text-green-900 mb-2 text-left">
-            <span className="font-semibold">{icon} {heading}:</span> {content}
-          </p>
-        );
-      }
-    }
+                      if (heading === 'Definition' || heading === 'Explanation' || heading === 'Remedy') {
+                        return (
+                          <p key={index} className="text-green-900 mb-2 text-left pl-6">
+                            <span className="font-semibold">{icon} {heading}:</span> {content}
+                          </p>
+                        );
+                      } else {
+                        return (
+                          <p key={index} className="text-green-900 mb-2 text-left">
+                            <span className="font-semibold">{icon} {heading}:</span> {content}
+                          </p>
+                        );
+                      }
+                    }
 
-    // If it's a non-heading line, ensure it's left-aligned with no indentation
-    if (cleaned) {
-      return (
-        <p key={index} className="text-lg font-bold text-green-700 mt-6 border-l-4 border-green-400 pl-0 text-left">
-          {cleaned}
-        </p>
-      );
-    }
+                    if (cleaned) {
+                      return (
+                        <p key={index} className="text-lg font-bold text-green-700 mt-6 border-l-4 border-green-400 pl-0 text-left">
+                          {cleaned}
+                        </p>
+                      );
+                    }
 
-    return null;
-  })}
-
-
-
-  </div>
-)}
-
-
-{/* Toggle Remedy dropdown */}
-{remedy && (
-  <Button 
-    onClick={() => setIsRemedyOpen((prev) => !prev)}
-    className="mt-2 text-sm text-green-400500"
-  >
-    {isRemedyOpen ? 'Hide remedy' : 'Show remedy'}
-  </Button>
-)}
-
+                    return null;
+                  })}
+            </div>
+          )}
         </div>
       </div>
     </div>

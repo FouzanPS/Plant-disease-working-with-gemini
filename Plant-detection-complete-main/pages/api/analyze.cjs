@@ -39,16 +39,22 @@ app.post('/api/analyze-disease', async (req, res) => {
     // Delete image after processing
     fs.unlinkSync(imagePath);
 
-    res.json({
-      result: data.prediction || 'Unknown',
-      confidence: data.confidence ? Math.round(data.confidence * 100) : 0
-    });
+    if (response.ok) {
+      res.json({
+        result: data.prediction || 'Unknown',
+        confidence: data.confidence ? Math.min(Math.round(data.confidence * (data.confidence <= 1 ? 100 : 1)), 100) : 0,
+        heatmapUrl: data.heatmapUrl || ''
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to analyze disease' });
+    }
 
   } catch (err) {
     console.error('Error analyzing disease:', err);
     res.status(500).json({ error: 'Failed to analyze disease.' });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Express server running on http://localhost:${PORT}`);

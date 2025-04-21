@@ -5,17 +5,17 @@ const { GoogleGenAI } = require('@google/genai');
 const app = express();
 const ai = new GoogleGenAI({ apiKey: 'AIzaSyBbln8RAByNy7-8b66JSyV_k10ekM0L7vY' });
 
-app.use(express.json()); // Middleware to parse JSON request bodies
+app.use(express.json());
 
 // Enable CORS for all origins and specifically for http://localhost:8080
 app.use(
   cors({
-    origin: ['*', 'http://localhost:8080'], // Allows all origins and http://localhost:8080
+    origin: ['*', 'http://localhost:8080','http://localhost:8081'],
   })
 );
 
 app.post('/remedysearch', async (req, res) => {
-  const { context } = req.body;
+  const { context } = req.body; //Gets the prediction for the webpage for gemini response
 
   if (!context) {
     return res.status(400).json({ error: 'Context is required' });

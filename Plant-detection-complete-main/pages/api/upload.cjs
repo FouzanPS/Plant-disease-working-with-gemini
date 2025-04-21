@@ -11,13 +11,13 @@ const PORT = 4000;
 app.use(cors({
   origin: (origin, callback) => {
     if (origin === 'http://localhost:8000' || !origin) {
-      callback(null, true); // Allow localhost:8000 or no origin (e.g., testing locally)
+      callback(null, true);
     } else {
-      callback(null, true); // Allow all other origins
+      callback(null, true);
     }
   },
   methods: ['GET', 'POST'],
-  credentials: true, // Allow credentials if needed (e.g., cookies)
+  credentials: true,
 }));
 
 app.use(express.json());
@@ -34,7 +34,7 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // e.g., 1691952341234.jpg
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
@@ -54,5 +54,5 @@ app.post('/upload', upload.single('image'), (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Upload server running on http://localhost:${PORT}`);
+  console.log(`Upload server running on http://localhost:${PORT}`);
 });

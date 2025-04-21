@@ -67,24 +67,18 @@ def generate_gradcam(image_path, save_path):
 
     # Normalize the CAM to [0, 1]
     cam = torch.maximum(cam.detach(), torch.tensor(0.0))  # Remove negative values
-    cam = cam / cam.max()  # Normalize to [0, 1]
-    
+    cam = cam / cam.max()
     # Resize the CAM
     cam = np.array(cam.detach().numpy())
     cam = cv2.resize(cam, (224, 224))
 
-    # Apply a more subtle color map (grayscale or lighter colormap)
-    cam = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_HSV)  # Try a subtle color map instead
-
-    # Apply a less aggressive mask (adjusted for dark regions only)
+    cam = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_HSV)
     img_np = np.array(img.resize((224, 224)))
-    
-    # Modify the mask to be less aggressive, now it highlights only dark spots more gently
-    mask = cv2.inRange(cam, (0, 0, 0), (100, 100, 100))  # Slightly higher threshold
+    # Darker region hightlighter
+    mask = cv2.inRange(cam, (0, 0, 0), (100, 100, 100))
     dark_highlight = cv2.bitwise_and(img_np, img_np, mask=mask)
 
-    # Adjust the blending of the heatmap with the image
-    superimposed_img = cv2.addWeighted(img_np, 0.8, cam, 0.5, 0)  # Lower heatmap weight
+    superimposed_img = cv2.addWeighted(img_np, 0.8, cam, 0.5, 0)
 
     print("Saving heatmap...", flush=True)
     cv2.imwrite(save_path, superimposed_img)
